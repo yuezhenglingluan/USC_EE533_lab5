@@ -1,0 +1,50 @@
+////////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 1995-2008 Xilinx, Inc.  All rights reserved.
+////////////////////////////////////////////////////////////////////////////////
+//   ____  ____ 
+//  /   /\/   / 
+// /___/  \  /    Vendor: Xilinx 
+// \   \   \/     Version : 10.1
+//  \   \         Application : sch2verilog
+//  /   /         Filename : analyzer.vf
+// /___/   /\     Timestamp : 02/14/2025 23:36:54
+// \   \  /  \ 
+//  \___\/\___\ 
+//
+//Command: C:\Xilinx\10.1\ISE\bin\nt\unwrapped\sch2verilog.exe -intstyle ise -family virtex2p -w "C:/Documents and Settings/student/My Documents/Logic_Analyzer/analyzer.sch" analyzer.vf
+//Design Name: analyzer
+//Device: virtex2p
+//Purpose:
+//    This verilog netlist is translated from an ECS schematic.It can be 
+//    synthesized and simulated, but it should not be modified. 
+//
+`timescale 1ns / 1ps
+
+module analyzer(clk, 
+                Data_input, 
+                Enable_read, 
+                Enable_write, 
+                reset, 
+                Data_output, 
+                Fifo_Empty, 
+                Full_Stop);
+
+    input clk;
+    input [71:0] Data_input;
+    input Enable_read;
+    input Enable_write;
+    input reset;
+   output [71:0] Data_output;
+   output Fifo_Empty;
+   output Full_Stop;
+   
+   
+   block_memory XLXI_2 (.clk(clk), 
+                        .din(Data_input[71:0]), 
+                        .rd_en(Enable_read), 
+                        .rst(reset), 
+                        .wr_en(Enable_write), 
+                        .dout(Data_output[71:0]), 
+                        .empty(Fifo_Empty), 
+                        .full(Full_Stop));
+endmodule
