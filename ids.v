@@ -49,7 +49,105 @@ module ids
       // misc
       input                                reset,
       input                                clk
+
+
+      // For Logic Analyzer
+
+      // input_fifo
+      output [DATA_WIDTH+CTRL_WIDTH-1:0]  LA_input_fifo_din,            // Data in
+      output                              LA_input_fifo_wr_en,          // Write enable
+      output                              LA_input_fifo_in_fifo_rd_en,  // Read the next word
+      output [DATA_WIDTH+CTRL_WIDTH-1:0]  LA_input_fifo_dout,
+      output                              LA_input_fifo_full,
+      output                              LA_input_fifo_nearly_full,
+      output                              LA_input_fifo_empty,
+      //output                            LA_input_fifo_reset,
+      //output                            LA_input_fifo_clk,
+
+      // matcher
+      output                              LA_matcher_ce,       // data enable
+      output                              LA_matcher_match_en, // match enable
+      //output                            LA_matcher_clk,
+      output [DATA_WIDTH+CTRL_WIDTH-1:0]  LA_matcher_pipe1,    // Data in
+      output [63:0]                       LA_matcher_hwregA,   // pattern in
+      output                              LA_matcher_match,    // match out
+      output                              LA_matcher_mrst,     // reset in
+
+      // drop_fifo
+      //output LA_drop_fifo_clk, 
+      output                              LA_drop_fifo_drop_pkt,     // Drop packet
+      output                              LA_drop_fifo_fiforead,     // Fifo read
+      output                              LA_drop_fifo_fifowrite,    // Fifo write
+      output                              LA_drop_fifo_firstword,    // First word
+      output [DATA_WIDTH+CTRL_WIDTH-1:0]  LA_drop_fifo_in_fifo,      // Fifo input
+      output                              LA_drop_fifo_lastword,     // Last word
+      //output                            LA_drop_fifo_rst, 
+      output [DATA_WIDTH+CTRL_WIDTH-1:0]  LA_drop_fifo_out_fifo,     // Fifo output
+      output                              LA_drop_fifo_valid_data,   // Fifo output valid
+
+      // module_regs
+      output                              LA_module_regs_reg_req_in,
+      output                              LA_module_regs_reg_ack_in,
+      output                              LA_module_regs_reg_rd_wr_L_in,
+      output [`UDP_REG_ADDR_WIDTH-1:0]    LA_module_regs_reg_addr_in,
+      output [`CPCI_NF2_DATA_WIDTH-1:0]   LA_module_regs_reg_data_in,
+      output [UDP_REG_SRC_WIDTH-1:0]      LA_module_regs_reg_src_in,
+
+      output                              LA_module_regs_reg_req_out,
+      output                              LA_module_regs_reg_ack_out,
+      output                              LA_module_regs_reg_rd_wr_L_out,
+      output [`UDP_REG_ADDR_WIDTH-1:0]    LA_module_regs_reg_addr_out,
+      output [`CPCI_NF2_DATA_WIDTH-1:0]   LA_module_regs_reg_data_out,
+      output [UDP_REG_SRC_WIDTH-1:0]      LA_module_regs_reg_src_out,
+      // --- counters interface
+      output                              LA_module_regs_counter_updates,
+      output                              LA_module_regs_counter_decrement,
+      // --- SW regs interface
+      output [95:0]                       LA_module_regs_software_regs,
+      // --- HW regs interface
+      output [31:0]                       LA_module_regs_hardware_regs
+      //output                            LA_module_regs_clk,
+      //output                            LA_module_regs_reset
    );
+
+   // Logic Analyzer connection
+   assign LA_input_fifo_din = {in_ctrl, in_data};
+   assign LA_input_fifo_wr_en = in_wr;
+   assign LA_input_fifo_in_fifo_rd_en = in_fifo_rd_en;
+   assign LA_input_fifo_dout = {in_fifo_ctrl_p, in_fifo_data_p};
+   assign LA_input_fifo_nearly_full = in_fifo_nearly_full;
+   assign LA_input_fifo_empty = in_fifo_empty;
+
+   assign LA_matcher_ce = matcher_ce;
+   assign LA_matcher_match_en = matcher_en;
+   assign LA_matcher_pipe1 = {in_fifo_ctrl, in_fifo_data};
+   assign LA_matcher_hwregA = {pattern_high, pattern_low};
+   assign LA_matcher_match = matcher_match;
+   assign LA_Matcher_mrst = matcher_reset;
+
+   assign LA_drop_fifo_drop_pkt = matcher_match && end_of_pkt;
+   assign LA_drop_fifo_fiforead = out_rdy;
+   assign LA_drop_fifo_fifowrite = out_wr_int;
+   assign LA_drop_fifo_firstword = begin_pkt;
+   assign LA_drop_fifo_in_fifo = {in_fifo_ctrl,in_fifo_data};
+   assign LA_drop_fifo_lastword = end_of_pkt;
+   assign LA_drop_fifo_out_fifo = {out_ctrl,out_data};
+   assign LA_drop_fifo_valid_data = out_wr;
+
+   assign LA_module_regs_reg_req_in = reg_req_in;
+   assign LA_module_regs_reg_ack_in = reg_ack_in;
+   assign LA_module_regs_reg_rd_wr_L_in = reg_rd_wr_L_in;
+   assign LA_module_regs_reg_addr_in = reg_addr_in;
+   assign LA_module_regs_reg_data_in = reg_data_in;
+   assign LA_module_regs_reg_src_in = reg_src_in;
+   assign LA_module_regs_reg_req_out = reg_req_out;
+   assign LA_module_regs_reg_ack_out = reg_ack_out;
+   assign LA_module_regs_reg_rd_wr_L_out = reg_rd_wr_L_out;
+   assign LA_module_regs_reg_addr_out = reg_addr_out;
+   assign LA_module_regs_reg_data_out = reg_data_out;
+   assign LA_module_regs_reg_src_out = reg_src_out;
+   assign LA_module_regs_software_regs = {ids_cmd,pattern_low,pattern_high};
+   assign LA_module_regs_hardware_regs = matches;
 
    // Define the log2 function
    // `LOG2_FUNC
@@ -108,7 +206,7 @@ module ids
       .wr_en         (in_wr),                // Write enable
       .rd_en         (in_fifo_rd_en),        // Read the next word 
       .dout          ({in_fifo_ctrl_p, in_fifo_data_p}),
-      .full          (),
+      .full          (input_fifo_full),
       .nearly_full   (in_fifo_nearly_full),
       .empty         (in_fifo_empty),
       .reset         (reset),
@@ -163,8 +261,8 @@ module ids
       .reg_src_out      (reg_src_out),
 
       // --- counters interface
-      .counter_updates  (),
-      .counter_decrement(),
+      .counter_updates  (LA_module_regs_counter_updates),
+      .counter_decrement(LA_module_regs_counter_decrement),
 
       // --- SW regs interface
       .software_regs    ({ids_cmd,pattern_low,pattern_high}),
