@@ -48,7 +48,7 @@ module ids
 
       // misc
       input                                reset,
-      input                                clk
+      input                                clk,
 
 
       // For Logic Analyzer
