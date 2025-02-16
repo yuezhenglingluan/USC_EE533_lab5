@@ -206,7 +206,7 @@ module ids
       .wr_en         (in_wr),                // Write enable
       .rd_en         (in_fifo_rd_en),        // Read the next word 
       .dout          ({in_fifo_ctrl_p, in_fifo_data_p}),
-      .full          (input_fifo_full),
+      .full          (LA_input_fifo_full),
       .nearly_full   (in_fifo_nearly_full),
       .empty         (in_fifo_empty),
       .reset         (reset),
